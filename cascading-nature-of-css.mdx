@@ -1,0 +1,104 @@
+---
+title: "Cascading Nature of CSS"
+date: "2023-04-10"
+description: "The term 'cascading' refers to a manner in which information is passed on to the next step where the progression or the flow is influenced by the previous step."
+tags: ["css", "frontend"]
+isFeatured: true
+---
+
+"Cascading" refers to a manner in which information is passed on to the next step where the progression or the flow is influenced by the previous step.
+
+In CSS, the term "cascading" comes from the scheme to determine the styles that are applied to the HTML elements. As CSS describes the presentation of a document written in HTML, multiple styles are applied to a single HTML element to do so. The presentation is described by the CSS as well as the attributes inherited from the parent component and device/browser. Because more than one style declaration could apply to an HTML element, there has to be a way to determine a specific style. So a suitable style is picked by "cascading down" from a general to a more specific declarations. The most specific and relevant style is picked while default or less specific styles are used as a fallback.
+
+### Cascade and Specificity
+
+"Cascading down" means, the style of a higher precedence will overwrite the style of lower precedence regardless of their order of appearance in the CSS. Process of "cascading down" involves following steps(priority increases lower down the cascade):
+
+1. Browser's default styles.
+2. External CSS stored in a separate file with a .css extension.
+3. Internal CSS declared within style tag;
+   element placed inside the head section of an HTML file.
+4. Inline CSS with "style" attribute placed inside an HTML element. Inline CSS coded into an HTML tag override ID, class, and tag CSS.
+5. CSS declaration marked with !important has the highest priority whether its inside external or internal CSS. Although correct specificity is preferred over !important.
+
+Precedence of external and internal CSS can be further broken down with the way CSS selectors are defined (ID selector has highest precedence whereas universal selector has lowest precedence):
+
+- **Universal selector (\*):** Styles applied all HTML elements.
+- **Element selectors:** Styles applied using an element selector (main, p, section, h1 etc).
+- **Class selectors:** Styles applied to an element using a class selector (.container).
+- **ID selectors:** Styles applied to an element using an ID selector (#id).
+
+### External style.css file
+
+```css
+p {
+  color: yellow;
+}
+.my-class {
+  color: black;
+}
+#my-id {
+  color: gray;
+}
+```
+
+### Internal CSS
+
+```html
+<style>
+  p {
+    color: green;
+  }
+  .my-class {
+    color: red;
+  }
+  #my-id {
+    color: orange;
+  }
+</style>
+```
+
+### Inline CSS
+
+```html
+<p class="my-class" id="my-id" style="color: blue">Paragraph content</p>
+```
+
+In above code all of the external, internal and inline CSS as well as the selectors are applicable to the HTML element. As inline CSS has highest precedence, the text color of the HTML element will be blue.
+
+### With ! important in external style.css or inside style tag in internal CSS
+
+```css
+p {
+  color: yellow !important;
+}
+.my-class {
+  color: orangered;
+}
+#my-id {
+  color: gray;
+}
+```
+
+!important keyword overrides the precedence although element selector's precedence is lower than id selector and class selector.
+
+### Conflict
+
+If two or more selectors describe same HTML element and are present within same external or internal CSS, their properties are combined. If the resulting CSS properties conflict or more than two styles have equal precedence, the browser chooses the property value that appeared later or most recently in the code. Non-conflicting properties are preserved down the cascade,
+
+```html
+<style>
+  h1 {
+    font-size: 12px;
+    font-weight: bold;
+  }
+  h1 {
+    font-size: 14px;
+  }
+  h1 {
+    font-size: 18px;
+  }
+</style>
+```
+
+Here font-size is overridden and set to 18px whereas font-weight attribute is preserved down the cascade.

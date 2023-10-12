@@ -1,0 +1,293 @@
+---
+title: "Storing Images with Base64 Encoding"
+date: "2023-07-01"
+description: "MongoDB, a popular NoSQL database, can be used to store binary data, such as images, as Buffer objects."
+tags: ["nodejs", "mongodb"]
+isFeatured: true
+---
+
+When web applications are built, it is common for images and other binary data to be stored in a database and retrieved from it. MongoDB, a popular NoSQL database, can be used to store binary data, such as images, as Buffer objects. Here's how to store images in MongoDB using Node.js and Base64 encoding.
+
+### Requirements:
+
+Before starting, ensure that the following are available:
+
+- Node.js and npm
+- MongoDB
+- Text editor and a terminal to run the code.
+- React app
+
+### Project Setup
+
+First, create a new Node.js project and install the necessary dependencies:
+
+```arduino
+mkdir image-upload
+cd image-upload
+npm init -y
+npm install express mongoose
+```
+
+- express is a popular web application framework for Node.js
+- mongoose is a MongoDB object modeling tool that provides a schema-based solution to model application data.
+
+### MongoDB Schema Creation
+
+To define the MongoDB schema for the Image model, a new file called models/Image.js is created and the following code is added:
+
+```javascript
+const mongoose = require("mongoose");
+
+const imageSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+  },
+  type: {
+    type: String,
+    required: true,
+  },
+  data: {
+    type: Buffer,
+    required: true,
+  },
+});
+
+module.exports = mongoose.model("Image", imageSchema);
+```
+
+This schema defines an Image model with three properties:
+
+1. **name:** string representing the filename.
+2. **type:** string representing the MIME type (e.g. "image/png").
+3. **data:** buffer object containing the binary image data.
+
+### Server Creation
+
+A simple Express server is created to handle image uploads. In a new file called server.js, the following code is added:
+
+```javascript
+const express = require("express");
+const app = express();
+const mongoose = require("mongoose");
+const Image = require("./models/Image");
+
+mongoose
+  .connect("mongodb://localhost:27017/myapp", {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => console.log(err));
+
+// Code for POST Request Here
+
+// Code for GET Request Here
+
+// Start the server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+```
+
+This sets up a basic Express app and connects to a local MongoDB database named myapp. Middleware is also set up to parse JSON request bodies.
+
+### Handle Image Uploads
+
+To handle image uploads, a new route is created that accepts POST requests to the /api/upload endpoint. It is assumed that the image data is sent in the request body as a Base64-encoded string.
+
+Here's the updated code for POST requests:
+
+```javascript
+// Handle POST request to /api/upload
+app.post("/api/upload", (req, res) => {
+  const imageData = req.body.image;
+  const imageBuffer = Buffer.from(imageData.data, "base64");
+  Image.create({
+    name: imageData.name,
+    type: imageData.type,
+    data: imageBuffer,
+  })
+    .then(() => {
+      res.status(201).json({
+        success: true,
+        message: "Image uploaded successfully",
+      });
+    })
+    .catch((error) => {
+      console.error(error);
+      res.status(500).json({
+        success: false,
+        message: "Unable to upload image",
+      });
+    });
+});
+```
+
+In this updated code, the image property is first extracted from the request body, which contains the Base64-encoded image data, along with the image name and type.
+
+The Base64-encoded string is then converted to a Buffer object using Buffer.from(). A new Image object can then be created with the converted Buffer data and saved to the database using the create() method.
+
+### Displaying Images
+
+A new route will be created to accept GET requests to the /api/images/:id endpoint, where id is the MongoDB \_id value for the image to be retrieved, in order to display the uploaded images.
+
+Here's the updated code for index.js:
+
+```javascript
+// Handle GET request to /api/images/:id
+app.get("/api/images/:id", (req, res) => {
+  const id = req.params.id;
+  Image.findById(id)
+    .then((image) => {
+      res.setHeader("Content-Type", image.type);
+      res.send(image.data);
+    })
+    .catch((error) => {
+      console.error(error);
+      res.status(500).send("Error retrieving image");
+    });
+});
+```
+
+In this updated code, the id parameter is first extracted from the request URL, which represents the MongoDB \_id value for the image that needs to be retrieved.
+
+The Image object with the specified \_id value is then retrieved using the findById() method. If the image is found, the Content-Type header is set to the image type and the image data is sent in the response body.
+
+### Complete Server.js Code
+
+```javascript
+const express = require("express");
+const app = express();
+const mongoose = require("mongoose");
+const Image = require("./models/Image");
+
+mongoose
+  .connect("mongodb://localhost:27017/myapp", {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => console.log(err));
+
+// Handle POST request to /api/upload
+app.post("/api/upload", (req, res) => {
+  const imageData = req.body.image;
+  const imageBuffer = Buffer.from(imageData.data, "base64");
+  Image.create({
+    name: imageData.name,
+    type: imageData.type,
+    data: imageBuffer,
+  })
+    .then(() => {
+      res.status(201).json({
+        success: true,
+        message: "Image uploaded successfully",
+      });
+    })
+    .catch((error) => {
+      console.error(error);
+      res.status(500).json({
+        success: false,
+        message: "Unable to upload image",
+      });
+    });
+});
+
+// Handle GET request to /api/images/:id
+app.get("/api/images/:id", (req, res) => {
+  const id = req.params.id;
+  Image.findById(id)
+    .then((image) => {
+      res.setHeader("Content-Type", image.type);
+      res.send(image.data);
+    })
+    .catch((error) => {
+      console.error(error);
+      res.status(500).send("Error retrieving image");
+    });
+});
+
+// Start the server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+```
+
+### Testing the Server
+
+Here's a sample React component that can be used to test the above server code:
+
+```javascript
+import React, { useState } from "react";
+
+const App = () => {
+  const [selectedFile, setSelectedFile] = useState(null);
+
+  const handleFileSelect = (event) => {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const image = reader.result.split(",")[1];
+      uploadImage(image, file.type);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const uploadImage = async (image, type) => {
+    const response = await fetch("/api/upload", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        image: {
+          name: selectedFile.name,
+          type: type,
+          data: image,
+        },
+      }),
+    });
+
+    const data = await response.json();
+    console.log(data);
+  };
+
+  const retrieveImage = async (id) => {
+    const response = await fetch(`/api/images/${id}`);
+
+    if (response.ok) {
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const img = new Image();
+      img.src = url;
+      document.body.appendChild(img);
+    } else {
+      console.error("Error retrieving image");
+    }
+  };
+
+  const handleRetrieve = () => {
+    const id = prompt("Enter image ID:");
+    retrieveImage(id);
+  };
+
+  return (
+    <div>
+      <input type="file" onChange={(e) => setSelectedFile(e.target.files[0])} />
+      <button onClick={handleFileSelect}>Upload</button>
+      <button onClick={handleRetrieve}>Retrieve</button>
+    </div>
+  );
+};
+
+export default App;
+```
+
+The component includes a file input for selecting an image to upload, a button to upload the selected image, and a button to retrieve an image by its ID. When the user selects an image to upload, the handleFileSelect function is called, which reads the contents of the selected file and converts them to a Base64-encoded string. The uploadImage function then sends a POST request to the server with the Base64-encoded image data, along with the image name and type.
+
+When the user clicks the "Retrieve" button, the handleRetrieve function prompts the user to enter an image ID. The retrieveImage function then sends a GET request to the server to retrieve the image with the specified ID. If the request is successful, the image data is returned as a blob, which is converted to a URL and used to create an img tag element that is appended to the document body.
+
+### Conclusion
+
+In this tutorial, it was shown how to store images in MongoDB using Node.js and Base64 encoding. An Express app was created that accepts Base64-encoded image data in POST requests and the images are stored in a MongoDB database. A route was also created to retrieve the images and send them in the response body. Finally the server was tested with front-end react component.
+
+It should be kept in mind that performance implications can arise from storing large amounts of binary data in a database, so other options such as storing the images on a file system or using a cloud-based storage service should be considered.

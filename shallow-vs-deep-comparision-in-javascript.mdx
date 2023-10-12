@@ -1,0 +1,147 @@
+---
+title: "Shallow vs. Deep Comparison in JavaScript"
+date: "2023-10-12"
+description: "Concepts of shallow and deep comparison in JavaScript, understanding their role in data equality and React performance. Using each for efficient rendering and accurate data validation."
+tags: ["javascript", "reactjs"]
+isFeatured: true
+---
+
+In JavaScript, the equality of operands can be assessed at different levels. It's fundamental to compare two operands in terms of data type, size, or reference, especially in JavaScript and React. One crucial concept in this context is shallow comparison.
+
+What is Shallow Comparison?
+
+Shallow comparison is a way to compare two objects or arrays by comparing only their immediate of top level values, rather than comparing their entire nested structure. In other words, a shallow comparison only looks at the first level of an object or array, and does not compare any nested objects or arrays. In JavaScript, shallow comparison is performed using the triple equals operator (===).
+
+The concept of the "first level" depends on whether you're dealing with primitive JavaScript values (basic data types representing immutable single values) or arrays/objects.
+
+**Primitive JavaScript Values:** When comparing two primitive values using ===, the operator checks if they are of the same type and have identical values.
+
+```javascript
+const num1 = 42;
+const num2 = 42;
+const str = "42";
+
+console.log(num1 === num2); // true (both have the same type and value)
+console.log(num1 === str); // false (different types, even though values are the same)
+```
+
+**Arrays or Objects:** When comparing objects or arrays using ===, the operator checks whether they share the same reference in memory rather than comparing their contents.
+
+```javascript
+const obj1 = { course: "html" };
+const obj2 = { course: "html" };
+const obj3 = obj1;
+
+console.log(obj1 === obj2); // false (different memory references)
+
+console.log(obj1 === obj3); // true (same memory reference)
+```
+
+### Shallow Comparison Use Cases in React
+
+React is known for its efficient rendering, and shallow comparison plays a crucial role in optimizing component rendering while avoiding unnecessary re-renders.
+
+React employs shallow comparison to evaluate changes in state and props. It checks if the top-level values or memory references have changed. If they differ, React assumes that the state or props have been modified, prompting a re-render. This approach helps React determine whether a component should update when it receives new props or state, ultimately enhancing performance by avoiding redundant re-renders.
+
+### Example with primitive value
+
+```javascript
+const [count, setCount] = useState(0);
+
+const incrementCount = () => {
+  setCount(count + 1);
+};
+```
+
+When the incrementCount function is called, the setCount function is invoked, incrementing it by 1. As a result, the component will re-render because the state has changed.
+
+```javascript
+const [count, setCount] = useState(0);
+
+const setToZero = () => {
+  setCount(0);
+};
+```
+
+When the setToZero function is called, the setCount function sets the count state to 0. Here, the component will not re-render. As there is no change in state with respect to it's previous value, react avoids re-rendering the component.
+
+### Example with object
+
+```javascript
+const [myObject, setMyObject] = useState({ a: 1, b: 2 });
+
+const handleClick = () => {
+  setMyObject({ a: 1, b: 2 });
+};
+```
+
+Here, handleClick sets the myObject state to a new object with the same values. However, shallow comparison recognizes the new object and the previous object have different references in memory. This triggers a re-render.
+
+```javascript
+const [myObject, setMyObject] = useState({ a: 1, b: 2 });
+
+const handleClick = () => {
+  myObject.a = 1;
+  setMyObject(myObject);
+};
+```
+
+Here, handleClick function modifies the myObject by changing the property. Though the property is changed same object reference will be used when setMyObject(myObject) is called. As a result, there won't be a re-render.
+
+In the context of props, React applies a parallel mechanism to decide when to re-render components. Re-render is triggered when props passed to a component change. The change is detected by th shallow comparision.
+
+Using shallow comparison reduces the likelihood of a missed update.
+
+### Deep Comparision
+
+Deep comparison, as opposed to shallow comparison, involves a more thorough examination of the nested structure of objects or arrays. Comparing not only the top-level properties but also going through nested objects or arrays ensures that the entire structure is identical. It considers both the values and the structure of the data for comparison.
+
+```javascript
+function deepCheck(obj1, obj2) {
+  // check if objects are of same type
+  if (typeof obj1 !== typeof obj2) {
+    return false;
+  }
+
+  // If both objects are primitive values, compare their values using ===
+  if (typeof obj1 !== "object" || obj1 === null || obj2 === null) {
+    return obj1 === obj2;
+  }
+
+  // Check if both objects have the same number of properties
+  const keys1 = Object.keys(obj1);
+  const keys2 = Object.keys(obj2);
+  if (keys1.length !== keys2.length) {
+    return false;
+  }
+
+  // Recursively compare the properties of the objects
+  for (const key of keys1) {
+    if (!keys2.includes(key) || !deepEqual(obj1[key], obj2[key])) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+const obj1 = {
+  course: "tailwindcss",
+  age: 30,
+  contacts: {
+    email: "user1@example.com",
+    phone: "123-456-7890",
+  },
+};
+
+const obj2 = {
+  user: "tailwindcss",
+  age: 30,
+  contacts: {
+    email: "user2@example.com",
+    phone: "123-456-5432",
+  },
+};
+
+console.log(deepCheck(obj1, obj2)); // false (obj1 and obj2 have the same structure but different value at deep level)
+```

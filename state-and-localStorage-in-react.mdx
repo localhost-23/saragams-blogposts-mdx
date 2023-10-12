@@ -1,0 +1,98 @@
+---
+title: "State and LocalStorage in Reactjs"
+date: "2023-05-11"
+description: "Combination of state and localStorage is an essential concept for developers to store, manage and persist data in React."
+tags: ["reactjs", "frontend"]
+---
+
+React is a popular JavaScript library used for building dynamic user interfaces. One of its key features is the use of state, which allows developers to manage data and update the UI in response to user interactions.
+
+State is an essential concept in React that allows developers to store and manage data within a component. It is an object that represents the current state of a component and can be modified using the setState() function. In React, state is used to track changes within a component and re-render the UI whenever the state changes. This makes React applications more performant since only the affected components are re-rendered, rather than the entire application.
+
+To define and use state in a React component, we need to use the useState() hook. This hook takes an initial state value and returns an array that consists of the current state value and a function to update the state value.
+
+However, managing state in React can sometimes be tricky, especially when dealing with complex data structures or persisting data across page refreshes. In this article, we'll explore some techniques for managing state and persist state between pafe refreshes and reload using localStorage in React.
+
+For example, here's how we might use useState to manage a list of items in a React component:
+
+```javascript
+import { useState } from "react";
+
+const TodoList = () => {
+  const [items, setItems] = useState([]);
+
+  const handleAddItem = (newItem) => {
+    setItems([...items, newItem]);
+  };
+
+  return (
+    <div>
+      {items.map((item) => (
+        <div key={item.id}>{item.name}</div>
+      ))}
+      <button onClick={() => handleAddItem({ id: uuid(), name: "New Item" })}>
+        Add Item
+      </button>
+    </div>
+  );
+};
+```
+
+In this example, we're using useState to manage a list of items. When the user clicks the "Add Item" button, we generate a new item with a unique ID using the uuid library and add it to the list of items using the setItems function.
+
+### Persisting React State with localStorage
+
+While state is useful for managing UI behavior, it doesn't persist across page refreshes. If we want to persist state between page refreshes, we can use the localStorage API. The localStorage API allows us to store key-value pairs in the user's browser. In React, this is commonly used to store data that persists even when the user leaves the application.
+
+To store a value in localStorage, we first need to convert it to a string using JSON.stringify. We can then use the setItem method to store the string in localStorage:
+
+```javascript
+localStorage.setItem("items", JSON.stringify(items));
+```
+
+To retrieve a value from localStorage, we can use the getItem method. We then need to convert the string back to a JavaScript object using JSON.parse:
+
+```javascript
+const storedItems = JSON.parse(localStorage.getItem("items"));
+```
+
+Here's an example of how we might use localStorage to persist the list of items in a TodoList component:
+
+```javascript
+import { useState, useEffect } from "react";
+
+const TodoList = () => {
+  const [items, setItems] = useState([]);
+
+  useEffect(() => {
+    const storedItems = JSON.parse(localStorage.getItem("items"));
+    if (storedItems) {
+      setItems(storedItems);
+    }
+  }, []);
+
+  const handleAddItem = (newItem) => {
+    setItems([...items, newItem]);
+    localStorage.setItem("items", JSON.stringify([...items, newItem]));
+  };
+
+  return (
+    <div>
+      {items.map((item) => (
+        <div key={item.id}>{item.name}</div>
+      ))}
+      <button onClick={() => handleAddItem({ id: uuid(), name: "New Item" })}>
+        Add Item
+      </button>
+    </div>
+  );
+};
+```
+
+In this example, we use the useEffect hook to read and write data to local storage. The useEffect hook is used to read data from local storage when the component is mounted. The stored data is parsed using JSON.parse and used to set the initial state value. The useEffect hook is also used to write the current state value to localStorage.
+
+### Conclusion
+
+In this article, we've explored how to use the useState hook in React to add state to functional components. We've also learned how to use the localStorage API to persist state between page loads.
+
+Using hooks and localStorage together can be a powerful combination for building web applications that are both dynamic and persistent. By reading and updating the state in LocalStorage, we can ensure that users can pick up where they left off even after closing the browser.

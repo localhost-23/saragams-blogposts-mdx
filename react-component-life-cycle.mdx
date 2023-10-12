@@ -1,0 +1,325 @@
+---
+title: "React Component Life Cycle"
+date: "2023-04-12"
+description: "By breaking down an application into smaller, manageable blocks, components can be combined to form parent components and ultimately construct the entire application."
+tags: ["reactjs", "frontend"]
+---
+
+In React, a component is a reusable piece of code that represents a UI element, like a header, sidebar, button, or layout. Components break down an application into small, manageable blocks that can be combined to create a parent component and the final application.
+
+The "React component life cycle" refers to the series of phases that a component undergoes, spanning from its creation to eventual removal. Understanding the React component life cycle is essential for effectively managing and manipulating component behavior throughout its lifespan.
+
+There are two type of component in ReactJS:
+
+1. **Class component** : A class component is JavaScript class that extends the React Component class, which allows it to return JSX code. It has access to the full range of React features, such as state, life cycle methods, and props.
+
+```js
+class Banner extends React.component {
+  constructor(props) {
+    super(props);
+  }
+  render() {
+    return <h1>Site Title: {this.props.title}</h1>;
+  }
+}
+```
+
+2. **Functional component** : A functional component is a simple function that returns JSX code. Compared to class component, functional component is simpler and easier to maintain because they do not contain life cycle methods. Functional component may receive data with props from parent component.
+
+```js
+const Banner = (props) => {
+  return <h1>Site Title: {props.title}</h1>;
+};
+```
+
+The React component life cycle consists of three phases(**Mounting**, **Updating** and **Unmounting**), which a component goes through from creation to removal.
+
+### Mounting Phase
+
+During the mounting phase, React creates a new component and inserts it into the DOM to maintain the component hierarchy. As part of this process, following built-in methods are called in the order:
+
+#### 1. constructor()
+
+This method is called before the component is mounted to the DOM, and it's used to initialize the component's state and bind event handler methods. The super(props) statement is called first in the constructor(), with the props passed as arguments, to enable the component to inherit methods from the parent component (React.Component). Without this, this.props would be undefined in the constructor().
+
+```javascript
+constructor(props) {
+    super(props);
+    this.state = { count: 0 };
+    this.handleClick = this.handleClick.bind(this);
+  }
+```
+
+In the component's initialization phase, the constructor method is used to set the initial state of the component with an object `{ count: 0 }`. Additionally, the handleClick method is bound to the component instance using the bind method, allowing it to be used as an event handler. When the handleClick method is called, it updates the component's state, triggering a re-render of the component with the updated state.
+
+#### 2. static getDerivedStateFromProps()
+
+The getDerivedStateFromProps() method is invoked after the constructor method and right before the initial mount or any subsequent update of a component's props. This method is used to update the component's state if it needs to be derived from the props. It takes props and state as arguments and returns an object to update the component's state or null to update nothing. Since getDerivedStateFromProps() is called before the render() method, any state updates made in this method will be reflected in the component's output.
+
+React can directly call the getDerivedStateFromProps() method on the class by making it static, without the need to create an instance of the component. However, a static method does not have access to the component's "this" keyword or state.
+
+This method is the least commonly used in this phase. It is recommended to use componentDidUpdate() or useEffect() to handle changes to props in most cases. getDerivedStateFromProps() is mainly useful when you need to synchronize state with props.
+
+```js
+static getDerivedStateFromProps(props, state)
+```
+
+#### 3. render()
+
+The render() method is responsible for rendering JSX that will be displayed in the DOM. In a class-based component, this method is the only required method. It must be pure, meaning that it cannot modify the component's state or props.
+
+The render() method is called immediately after getDerivedStateFromProps(), and its output is a set of React elements that instruct React to render a DOM node, such as `<div>`, `<main>`, `<section>`, or another user-defined component like `<TestComponent>`.
+
+```js
+render() {
+    return (
+      <div>
+        <h1>Hello, World!</h1>
+      </div>
+    );
+  }
+```
+
+Besides react element, other possible return types include arrays, fragments, booleans, null, undefined, and text nodes or portals, which can be strings or numbers.
+
+#### 4. componentDidMount()
+
+The componentDidMount() method is called after the component is first added (mounted) to the DOM. It is typically used for initialization tasks that require access to the DOM, such as fetching data from an API or setting up event listeners.
+
+If componentDidMount() is implemented, componentWillUnmount() also needs to be called for clean up, and componentDidUpdate() to handle changes.
+
+The code below shows a CounterButton component to demonstrate React's mounting phase:
+
+```js
+import React, { Component } from "react";
+
+class CounterButton extends Component {
+  constructor(props) {
+    super(props);
+    console.log("counter button constructor");
+    this.state = {
+      count: 0,
+    };
+  }
+
+  static getDerivedStateFromProps(props, state) {
+    if (props.increment !== state.increment) {
+      console.log("derived from props");
+      return {
+        increment: props.increment,
+      };
+    }
+    return null;
+  }
+
+  handleClick = () => {
+    this.setState((prevState) => ({
+      count: prevState.count + this.state.increment,
+    }));
+    console.log("render() method called");
+  };
+
+  componentDidMount() {
+    console.log("component finally mounted");
+  }
+
+  render() {
+    return (
+      <div>
+        <button onClick={this.handleClick}>Increment</button>
+        <p>Count: {this.state.count}</p>
+      </div>
+    );
+  }
+}
+
+export default CounterButton;
+```
+
+Here, CounterButton class extends the Component class from the react module. The component has a constructor method that logs "CounterButton constructor" and the props object received from the parent component to the console when it's called. This method initializes the state object with a count of 0.
+
+getDerivedStateFromProps method is invoked whenever a component receives new props. If the increment prop has changed since the last update, this method returns an object with a new increment property that is set to the new value of the prop. If the increment prop has not changed, the method returns null. The increment property is received as a prop from the parent component.
+
+```js
+<CounterButton increment={3}>
+```
+
+Here value of count is incremented by 3.
+
+The **getDerivedStateFromProps()** method shown in the original code may not always be required. In this example, the increment value can be implemented within the **handleClick()** function itself, which keeps the logic simple. **handleClick()** function is called when the button is clicked. It increases the value of count and logs **"render() method called"** to the console every time the component is rendered to the screen.
+
+The **render()** method returns a div element that contains p element and a button. p element displays the current value of count property. button element calls the **handleClick()** method that increase the value of count when clicked. This method also logs **"render"** to the console every time the component is rendered to the screen. Finnaly **componentDidMount()** life cycle method logs **"component mounted"** to the console when the component is mounted to the DOM.
+
+**Output:**
+
+```bash
+counter button constructor
+props: {increment: 3}
+derived from props
+render() method called
+component finally mounted
+```
+
+### Updating Phase
+
+A component is re-rendered whenever an update takes place, which refers to changes in the component's state or props. There are built-in methods that get called in order when the component is updated:
+
+1. static getDerivedStateFromProps(props, state) (if present)
+2. shouldComponentUpdate(nextProps, nextState)
+3. render()
+4. getSnapshotBeforeUpdate(prevProps, prevState) (if present)
+5. componentDidUpdate(prevProps, prevState, snapshot) (if getSnapshotBeforeUpdate is present)
+
+\*Note that getDerivedStateFromProps() and render() methods are also part of the mounting phase, as described above. This is because getDerivedStateFromProps() derives state from props when it is first called, as well as when props are updated, if getDerivedStateFromProps() is present. In the case of render(), it has to be called anyway so that the component is inserted into the DOM with updated values.
+
+#### shouldComponentUpdate()
+
+The shouldComponentUpdate() method determines whether a component should be re-rendered or not. By default, React components are re-rendered on every change in state or props. In most cases, a re-render is expected when the state or props change. However, in some cases, we may want to prevent a component from re-rendering even if a new state or props are received. This can optimize the performance of the component by controlling whether or not it should re-render.
+
+The shouldComponentUpdate(nextProps, nextState) method compares this.props with nextProps and this.state with nextState, and returns a boolean value, either true or false. If false is returned, the component won't re-render. On the other hand, if true is returned, the browser will re-render the component.
+
+\*Note that returning false from shouldComponentUpdate() does not prevent child components from re-rendering when their state changes. Example below shows shouldComponentUpdate() method that only allows the component to re-render if its "increment" prop changes:
+
+```js
+class MyComponent extends React.Component {
+  shouldComponentUpdate(nextProps, nextState) {
+    if (nextProps.increment === this.props.increment) {
+      return false;
+    }
+    return true;
+  }
+
+  render() {
+    return <div>{this.props.increment}</div>;
+  }
+}
+```
+
+The "shouldComponentUpdate" method should primarily be used to optimize performance rather than to prevent re-rendering. To determine whether a component should be re-rendered or not, it is recommended to use logical rendering and "PureComponent". "PureComponent" does a shallow comparison of the component's "props" and "state" to determine if they have changed since the last rendering. If they have not changed, the component will not be re-rendered. This reduces the likelihood of a missed update.
+
+#### getSnapshotBeforeUpdate()
+
+The "getSnapshotBeforeUpdate()" method is used to capture information about a component's current state before it is updated, and is called just before the latest rendered output is committed. It is commonly used in chat applications, where the scroll position needs to be managed in the chat thread. Essentially, this method enables a component to perform certain actions based on its previous state.
+
+The "getSnapshotBeforeUpdate()" method has the following signature:
+
+```js
+getSnapshotBeforeUpdate(prevProps, prevState);
+```
+
+The "prevProps" and "prevState" parameters represent the component's props and state before the update, respectively. The method should return a snapshot object or null, which is then passed on to the "componentDidUpdate()" method as a parameter.
+
+\*Note that the "getSnapshotBeforeUpdate()" method is not called during the initial phase of the component, and also if the "shouldComponentUpdate" method returns false.
+
+#### componentDidUpdate()
+
+The componentDidUpdate() method is called immediately after a component has been updated, and it is used to compare the previous and current states and props to determine if any actions need to be taken based on the changes. For example, if the props have not changed, it may not be necessary to make a network request. The method is called with three arguments: prevProps, prevState, and snapshot. prevProps and prevState are objects that contain the component's previous props and state before the update, while snapshot is the value returned by getSnapshotBeforeUpdate(). It's worth noting that componentDidUpdate() won't be invoked if shouldComponentUpdate() returns false.
+
+```js
+componentDidUpdate(prevProps, prevState, snapshot);
+```
+
+However, it's important to avoid creating an infinite loop by setting the state inside componentDidUpdate(). Doing so can cause an infinite loop of updates. To prevent this, it's recommended to check if the new props or state are different from the previous ones before updating the state.
+
+```js
+componentDidUpdate(prevProps) {
+  // Typical usage (don't forget to compare props):
+  if (this.props.postID !== prevProps.postID) {
+    this.fetchData(this.props.postID);
+  }
+}
+```
+
+Here's an example of how the Update Phase of a React component might work for a chat app. In this case, we're focusing on shouldComponentUpdate(), getSnapshotBeforeUpdate(), and componentDidUpdate():
+
+```js
+import React, { Component } from "react";
+
+class ScrollTop extends Component {
+  constructor(props) {
+    super(props);
+    this.myRef = React.createRef();
+    this.state = {
+      messages: [],
+    };
+  }
+
+  shouldComponentUpdate(nextProps, nextState) {
+    if (this.state.messages !== nextState.messages) {
+      console.log("should update");
+      return true;
+    }
+    return false;
+  }
+
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    if (snapshot !== null) {
+      this.myRef.current.scrollTop +=
+        this.myRef.current.scrollHeight - snapshot.scrollHeight;
+    } else {
+      this.myRef.current.scrollTop = this.myRef.current.scrollHeight;
+    }
+  }
+
+  getSnapshotBeforeUpdate(prevProps, prevState) {
+    if (prevState.messages.length < this.state.messages.length) {
+      return {
+        scrollHeight: this.myRef.current.scrollHeight,
+      };
+    }
+    return null;
+  }
+
+  addMessage = () => {
+    const len = this.state.messages.length + 1;
+    this.setState({
+      messages: [...this.state.messages, `new message ${len}`],
+    });
+  };
+
+  render() {
+    return (
+      <div ref={this.myRef} style={{ height: "400px", overflow: "scroll" }}>
+        {this.state.messages.map((message, index) => (
+          <p key={index}>{message}</p>
+        ))}
+        <button onClick={() => this.addMessage()}>Add Message</button>
+      </div>
+    );
+  }
+}
+
+export default ScrollTop;
+```
+
+In this example, the ScrollTop class has a state variable called messages. When the "Add Message" button is clicked, a new message is added to the array using the addMessage() method.
+
+First, **shouldComponentUpdate()** is called, which compares the current messages array to the next one that will be applied, and returns true if the array has changed. It's important to note that this comparison of the messages array is a **shallow comparison**. After the **render()** method is called, but before the component's UI is updated in the DOM, the **getSnapshotBeforeUpdate()** method is called. This method captures the current scroll height of the div element that contains the messages. If new messages have been added since the last render, an object with the current scroll height is returned to be used in the **componentDidUpdate()** method. Otherwise, null is returned.
+
+Finally, the **componentDidUpdate()** life cycle method is called after the component's UI has been updated in the DOM. Here, the previous scroll height (stored in the snapshot argument) is compared. This way the div element containing the messages is always scrolled to the bottom.
+
+### Unmounting Phase:
+
+Different components can replace or remove a component, which causes it to be unmounted and cleared from memory. During this unmounting phase, the **componentWillUnmount()** method is called. This method is used for cleanup operations such as removing event listeners, canceling API requests, or invalidating timers created by componentDidMount().
+
+It's worth noting that **setState()** should not be called in **componentWillUnmount()** because the component will not be re-rendered once it's unmounted, and any changes made to the component won't be updated.
+
+Here's an example to demonstrate how to use **componentWillUnmount()** in a Clock Component:
+
+```js
+class Clock extends React.Component {
+  componentDidMount() {
+    this.clockInterval = setInterval(() => console.log("tick"), 1000);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.clockInterval);
+  }
+
+  render() {
+    return <div>Clock Component</div>;
+  }
+}
+```
+
+In this example, **componentDidMount()** sets up an interval to log 'tick' to the console every second. **componentWillUnmount()** clears this interval when the component is unmounted, ensuring that the interval is stopped and does not continue to run after the component is removed from the application.
